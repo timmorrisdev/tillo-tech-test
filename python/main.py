@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
@@ -10,10 +10,47 @@ with open('./orders.json') as json_file:
 
 @app.route("/api/orders", methods=['GET'])
 def get_order_by_id():
+    # query parameters
     order_id = request.args.get("id")
-    if valid_order_id(order_id) is not True:
-        return jsonify({"error": f"{order_id} is incorrectly formatted"})
-    return jsonify(next((order for order in data if order["id"] == order_id), {}))
+    currency = request.args.get("currency")
+    shipped_to = request.args.get("shipped_to")
+    cost = request.args.get("price")
+    query = "{},{},{},{}".format(order_id, currency, shipped_to, cost)
+
+    result = []
+    if order_id != None:
+        filterData = list(filter(lambda d: d['id'] == order_id, data))
+        result.append(filterData)
+
+    if currency != None:
+        if result:
+            result = list(filter(lambda d: d['currency'] == currency, result))
+        else:
+            result = list(filter(lambda d: d['currency'] == currency, data))
+
+    '''
+    I was unable to access the values of the nested 'shipping_address' 
+    dictionary to impliment this filter correctly
+    '''
+    if shipped_to != None:
+        if result:
+            result = list(filter(lambda d: shipped_to in d['customer'], result))
+        else:
+            result = list(filter(lambda d: shipped_to in d['customer'], data))
+
+    if cost != None:
+        if result:
+            result = list(filter(lambda d: d['price'] == cost, result))
+        else:
+            result = list(filter(lambda d: d['price'] == cost, data))
+
+    resultDict = {
+        "results": len(result),
+        "filters": query,
+        "orders": result,
+    }
+
+    return jsonify(resultDict)
 
 
 def valid_order_id(order_id: str) -> bool:
@@ -22,47 +59,6 @@ def valid_order_id(order_id: str) -> bool:
         return True
     except ValueError:
         return False
-
-
-# url example api/currency?currency=USD
-@app.route("/api/currency", methods=['GET'])
-def get_order_by_currency():
-    currency = request.args.get("currency")
-
-    orders = []
-    for order in data:
-        if order["currency"] == currency:
-            orders.append(order)
-    results = orders[:3]
-
-    return render_template("currency.html", results=results)
-
-
-
-@app.route("/api/shipping_address", methods=['GET'])
-def get_order_by_shipping_address():
-    shipping_address = request.args.get("shipping_address")
-    orders = []
-    for order in data:
-        if order["shipping_address"] == shipping_address:
-            orders.append(order)
-    results = orders[:3]
-
-    return render_template("shipping_address.html", results=results)
-
-
-# url example api/price?price=0.33
-@app.route("/api/price", methods=['GET'])
-def get_order_by_price():
-    price = request.args.get("price")
-    
-    orders = []
-    for order in data:
-        if order["price"] == price:
-            orders.append(order)
-    results = orders[:3]
-
-    return render_template("cost.html", results=results)
 
 
 if __name__ == '__main__':
