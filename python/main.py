@@ -31,12 +31,13 @@ def get_order_by_id():
     '''
     I was unable to access the values of the nested 'shipping_address' 
     dictionary to impliment this filter correctly
+    I have left where I got to in place to show my working.
     '''
-    if shipped_to != None:
-        if result:
-            result = list(filter(lambda d: shipped_to in d['customer'], result))
-        else:
-            result = list(filter(lambda d: shipped_to in d['customer'], data))
+    # if shipped_to != None:
+    #     if result:
+    #         result = list(filter(lambda d: shipped_to in d['customer']['shipping_address'], result))
+    #     else:
+    #         result = list(filter(lambda d: shipped_to in d['customer']['shipping_address'], data))
 
     if cost != None:
         if result:
